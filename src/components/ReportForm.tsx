@@ -47,10 +47,13 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
   };
 
   const onKwKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addKeyword();
-    }
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const kw = e.currentTarget.value.trim();
+    if (!kw || keywords.length >= MAX_KEYWORDS || keywords.includes(kw)) return;
+    setKeywords([...keywords, kw]);
+    setKwInput("");
+    clearError("keywords");
   };
 
   const validate = (): FormErrors => {
