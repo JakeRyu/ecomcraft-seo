@@ -117,9 +117,9 @@ test.describe("How It Works", () => {
 test.describe("Pricing", () => {
   test("shows all three plans", async ({ page }) => {
     const pricing = page.locator("#pricing");
-    await expect(pricing.getByText("Starter", { exact: true }).first()).toBeVisible();
-    await expect(pricing.getByText("Growth", { exact: true }).first()).toBeVisible();
-    await expect(pricing.getByText("Pro", { exact: true }).first()).toBeVisible();
+    await expect(pricing.getByText("Snapshot", { exact: true }).first()).toBeVisible();
+    await expect(pricing.getByText("Insight", { exact: true }).first()).toBeVisible();
+    await expect(pricing.getByText("Deep Dive", { exact: true }).first()).toBeVisible();
   });
 
   test("shows correct prices", async ({ page }) => {
@@ -129,7 +129,7 @@ test.describe("Pricing", () => {
     await expect(pricing.getByText("£39", { exact: true })).toBeVisible();
   });
 
-  test("Growth card has Most Popular badge", async ({ page }) => {
+  test("Insight card has Most Popular badge", async ({ page }) => {
     await expect(page.getByText("Most Popular")).toBeVisible();
   });
 
@@ -142,7 +142,7 @@ test.describe("Pricing", () => {
 // ── Pricing → plan selection interaction ────────────────────────
 
 test.describe("Pricing plan selection", () => {
-  const PLANS = ["Starter", "Growth", "Pro"] as const;
+  const PLANS = ["Snapshot", "Insight", "Deep Dive"] as const;
 
   for (const plan of PLANS) {
     test(`clicking ${plan} changes button to "Selected ✓" with selected styling`, async ({
@@ -228,21 +228,21 @@ test.describe("Report Form", () => {
 
   test("can select a plan in the form", async ({ page }) => {
     const form = page.locator("#report-form");
-    const starter = form.getByRole("button", { name: /Starter/ });
-    await starter.click();
-    await expect(starter).toHaveAttribute("aria-pressed", "true");
+    const snapshot = form.getByRole("button", { name: /Snapshot/ });
+    await snapshot.click();
+    await expect(snapshot).toHaveAttribute("aria-pressed", "true");
   });
 
   test("plan selector shows all three plans with prices", async ({ page }) => {
     const form = page.locator("#report-form");
     await expect(
-      form.getByRole("button", { name: /Starter/ }).filter({ hasText: "£9" })
+      form.getByRole("button", { name: /Snapshot/ }).filter({ hasText: "£9" })
     ).toBeVisible();
     await expect(
-      form.getByRole("button", { name: /Growth/ }).filter({ hasText: "£19" })
+      form.getByRole("button", { name: /Insight/ }).filter({ hasText: "£19" })
     ).toBeVisible();
     await expect(
-      form.getByRole("button", { name: /Pro/ }).filter({ hasText: "£39" })
+      form.getByRole("button", { name: /Deep Dive/ }).filter({ hasText: "£39" })
     ).toBeVisible();
   });
 });
@@ -263,7 +263,7 @@ test.describe("Report Form validation", () => {
     await kwInput.fill("plumber");
     await kwInput.press("Enter");
     await form.getByLabel("Location or postcode").fill("Bristol");
-    await form.getByRole("button", { name: /Starter/ }).click();
+    await form.getByRole("button", { name: /Snapshot/ }).click();
   };
 
   test("submitting empty form shows all four errors", async ({ page }) => {
@@ -316,7 +316,7 @@ test.describe("Report Form validation", () => {
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
     await expect(form.getByText("Please choose a plan")).toBeVisible();
 
-    await form.getByRole("button", { name: /Starter/ }).click();
+    await form.getByRole("button", { name: /Snapshot/ }).click();
     await expect(form.getByText("Please choose a plan")).toBeHidden();
   });
 

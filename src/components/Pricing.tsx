@@ -8,7 +8,7 @@ type PricingProps = {
 
 const PLANS = [
   {
-    name: "Starter",
+    name: "Snapshot",
     price: "£9",
     period: "one-time",
     features: [
@@ -19,7 +19,7 @@ const PLANS = [
     ],
   },
   {
-    name: "Growth",
+    name: "Insight",
     price: "£19",
     period: "one-time",
     recommended: true,
@@ -32,7 +32,7 @@ const PLANS = [
     ],
   },
   {
-    name: "Pro",
+    name: "Deep Dive",
     price: "£39",
     period: "one-time",
     features: [

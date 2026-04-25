@@ -5,9 +5,9 @@ import type { FormEvent, KeyboardEvent } from "react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
 const PLANS = [
-  { name: "Starter", price: "£9" },
-  { name: "Growth", price: "£19" },
-  { name: "Pro", price: "£39" },
+  { name: "Snapshot", price: "£9" },
+  { name: "Insight", price: "£19" },
+  { name: "Deep Dive", price: "£39" },
 ] as const;
 
 const MAX_KEYWORDS = 5;
