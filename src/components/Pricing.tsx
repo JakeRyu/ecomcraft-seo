@@ -1,6 +1,11 @@
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PricingCard } from "@/components/ui/PricingCard";
 
+type PricingProps = {
+  selectedPlan: string | null;
+  onSelectPlan: (plan: string) => void;
+};
+
 const PLANS = [
   {
     name: "Starter",
@@ -40,7 +45,7 @@ const PLANS = [
   },
 ] as const;
 
-export function Pricing() {
+export function Pricing({ selectedPlan, onSelectPlan }: PricingProps) {
   return (
     <section id="pricing" className="px-[clamp(24px,5vw,100px)] py-24">
       <div className="mx-auto max-w-[1280px]">
@@ -59,7 +64,12 @@ export function Pricing() {
 
         <div className="grid grid-cols-1 items-end gap-5 min-[900px]:grid-cols-3">
           {PLANS.map((plan) => (
-            <PricingCard key={plan.name} {...plan} />
+            <PricingCard
+              key={plan.name}
+              {...plan}
+              selected={selectedPlan === plan.name}
+              onSelect={() => onSelectPlan(plan.name)}
+            />
           ))}
         </div>
       </div>

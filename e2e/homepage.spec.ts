@@ -133,13 +133,61 @@ test.describe("Pricing", () => {
     await expect(page.getByText("Most Popular")).toBeVisible();
   });
 
-  test("Choose Plan buttons link to report form", async ({ page }) => {
+  test("shows three Choose Plan buttons", async ({ page }) => {
     const pricing = page.locator("#pricing");
-    const links = pricing.getByRole("link", { name: "Choose Plan" });
-    for (const link of await links.all()) {
-      await expect(link).toHaveAttribute("href", "#report-form");
-    }
+    await expect(pricing.getByRole("button", { name: /Choose Plan|Selected/ })).toHaveCount(3);
   });
+});
+
+// ── Pricing → plan selection interaction ────────────────────────
+
+test.describe("Pricing plan selection", () => {
+  const PLANS = ["Starter", "Growth", "Pro"] as const;
+
+  for (const plan of PLANS) {
+    test(`clicking ${plan} changes button to "Selected ✓" with selected styling`, async ({
+      page,
+    }) => {
+      const pricing = page.locator("#pricing");
+      const btn = pricing
+        .getByRole("button", { name: /Choose Plan|Selected/ })
+        .nth(PLANS.indexOf(plan));
+
+      await btn.click();
+
+      await expect(btn).toHaveText("Selected ✓");
+      await expect(btn).toHaveAttribute("aria-pressed", "true");
+    });
+
+    test(`clicking ${plan} scrolls to the report form`, async ({ page }) => {
+      const pricing = page.locator("#pricing");
+      const btn = pricing
+        .getByRole("button", { name: /Choose Plan|Selected/ })
+        .nth(PLANS.indexOf(plan));
+
+      await btn.click();
+
+      // The report form section should be scrolled into view
+      const form = page.locator("#report-form");
+      await expect(form).toBeInViewport({ ratio: 0.5 });
+    });
+
+    test(`clicking ${plan} pre-selects that plan in the report form`, async ({
+      page,
+    }) => {
+      const pricing = page.locator("#pricing");
+      const btn = pricing
+        .getByRole("button", { name: /Choose Plan|Selected/ })
+        .nth(PLANS.indexOf(plan));
+
+      await btn.click();
+
+      // The matching plan button in the form should be aria-pressed=true
+      const form = page.locator("#report-form");
+      const planBtn = form.getByRole("button", { name: new RegExp(plan) });
+      await expect(planBtn).toHaveAttribute("aria-pressed", "true");
+    });
+  }
 });
 
 // ── Report Form ─────────────────────────────────────────────────

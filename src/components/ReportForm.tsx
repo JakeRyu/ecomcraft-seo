@@ -12,10 +12,14 @@ const PLANS = [
 
 const MAX_KEYWORDS = 5;
 
-export function ReportForm() {
+type ReportFormProps = {
+  selectedPlan: string | null;
+  onSelectPlan: (plan: string) => void;
+};
+
+export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [kwInput, setKwInput] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   const addKeyword = () => {
     const kw = kwInput.trim();
@@ -149,7 +153,7 @@ export function ReportForm() {
                   <button
                     key={plan.name}
                     type="button"
-                    onClick={() => setSelectedPlan(plan.name)}
+                    onClick={() => onSelectPlan(plan.name)}
                     aria-pressed={sel}
                     className={`flex flex-col items-center gap-0.5 rounded-full border-[1.5px] px-3 py-2.5 text-sm font-medium transition-colors ${
                       sel

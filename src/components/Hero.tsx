@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { ScrollLink } from "@/components/ui/ScrollLink";
 import { HeroScoreCard } from "./HeroScoreCard";
 
 const PROOF_POINTS = [
@@ -36,12 +37,12 @@ export function Hero() {
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <Link
-              href="#report-form"
+            <ScrollLink
+              targetId="report-form"
               className="rounded-full border-[1.5px] border-ink bg-ink px-7 py-3 text-[15px] font-medium tracking-[-0.03em] text-canvas transition-opacity hover:opacity-85"
             >
               Get My Visibility Report
-            </Link>
+            </ScrollLink>
             <Link
               href="#sample-report"
               className="rounded-full border-[1.5px] border-ink/25 bg-white px-7 py-3 text-[15px] font-normal tracking-[-0.03em] text-ink transition-colors hover:border-ink/50"

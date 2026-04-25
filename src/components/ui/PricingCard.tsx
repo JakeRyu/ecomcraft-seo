@@ -1,4 +1,4 @@
-import Link from "next/link";
+"use client";
 
 type PricingCardProps = {
   name: string;
@@ -6,6 +6,8 @@ type PricingCardProps = {
   period: string;
   features: readonly string[];
   recommended?: boolean;
+  selected: boolean;
+  onSelect: () => void;
 };
 
 export function PricingCard({
@@ -14,7 +16,16 @@ export function PricingCard({
   period,
   features,
   recommended = false,
+  selected,
+  onSelect,
 }: PricingCardProps) {
+  const handleClick = () => {
+    onSelect();
+    document
+      .getElementById("report-form")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   if (recommended) {
     return (
       <div className="relative rounded-[40px] bg-ink px-8 py-10 shadow-lifted min-[900px]:-translate-y-3">
@@ -23,26 +34,34 @@ export function PricingCard({
         </div>
         <PricingHeader name={name} price={price} period={period} inverse />
         <PricingFeatures features={features} inverse />
-        <Link
-          href="#report-form"
-          className="mt-1 block w-full rounded-full bg-canvas py-[13px] text-center text-[15px] font-medium tracking-[-0.03em] text-ink transition-opacity hover:opacity-85"
+        <button
+          type="button"
+          aria-pressed={selected}
+          onClick={handleClick}
+          className="mt-1 w-full rounded-full bg-canvas py-[13px] text-[15px] font-medium tracking-[-0.03em] text-ink transition-opacity hover:opacity-85"
         >
-          Choose Plan
-        </Link>
+          {selected ? "Selected ✓" : "Choose Plan"}
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="rounded-[40px] border-2 border-transparent bg-lifted px-7 py-8">
+    <div
+      className={`rounded-[40px] border-2 bg-lifted px-7 py-8 transition-colors ${
+        selected ? "border-ink" : "border-transparent"
+      }`}
+    >
       <PricingHeader name={name} price={price} period={period} />
       <PricingFeatures features={features} />
-      <Link
-        href="#report-form"
-        className="mt-1 block w-full rounded-full bg-ink py-[13px] text-center text-[15px] font-medium tracking-[-0.03em] text-canvas transition-opacity hover:opacity-85"
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={handleClick}
+        className="mt-1 w-full rounded-full bg-ink py-[13px] text-[15px] font-medium tracking-[-0.03em] text-canvas transition-opacity hover:opacity-85"
       >
-        Choose Plan
-      </Link>
+        {selected ? "Selected ✓" : "Choose Plan"}
+      </button>
     </div>
   );
 }
