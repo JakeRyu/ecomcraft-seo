@@ -42,15 +42,15 @@ jobs:
           retention-days: 7
 
       - name: Pull Vercel environment
-        run: bunx vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
+        run: bunx vercel pull --yes --environment=preview
 
       - name: Build with Vercel
-        run: bunx vercel build --token=$VERCEL_TOKEN
+        run: bunx vercel build
 
       - name: Deploy preview to Vercel
         id: deploy
         run: |
-          url=$(bunx vercel deploy --prebuilt --token=$VERCEL_TOKEN)
+          url=$(bunx vercel deploy --prebuilt)
           echo "preview-url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Comment Preview URL on PR

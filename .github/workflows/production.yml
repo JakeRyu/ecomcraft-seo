@@ -1,0 +1,45 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Type check
+        run: bun run type-check
+
+      - name: Pull Vercel environment
+        run: bunx vercel pull --yes --environment=production
+
+      - name: Build with Vercel
+        run: bunx vercel build --prod
+
+      - name: Deploy to production
+        id: deploy
+        run: |
+          url=$(bunx vercel deploy --prebuilt --prod)
+          echo "production-url=$url" >> "$GITHUB_OUTPUT"
+          echo "🚀 Production: $url" >> "$GITHUB_STEP_SUMMARY"
