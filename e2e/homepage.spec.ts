@@ -378,4 +378,26 @@ test.describe("Footer", () => {
   test("shows copyright line", async ({ page }) => {
     await expect(page.getByText(/© 2026 ecomcraft Ltd/)).toBeVisible();
   });
+
+  test("About link opens ecomcraft.co.uk in a new tab", async ({ page }) => {
+    const footer = page.getByRole("contentinfo");
+    const about = footer.getByRole("link", { name: "About" });
+    await expect(about).toHaveAttribute("href", "https://www.ecomcraft.co.uk");
+    await expect(about).toHaveAttribute("target", "_blank");
+    await expect(about).toHaveAttribute("rel", /noopener/);
+  });
+
+  test("Contact links open ecomcraft.co.uk/contact in a new tab", async ({ page }) => {
+    const footer = page.getByRole("contentinfo");
+    const contacts = footer.getByRole("link", { name: "Contact" });
+    await expect(contacts).toHaveCount(2);
+    for (const contact of await contacts.all()) {
+      await expect(contact).toHaveAttribute(
+        "href",
+        "https://www.ecomcraft.co.uk/contact"
+      );
+      await expect(contact).toHaveAttribute("target", "_blank");
+      await expect(contact).toHaveAttribute("rel", /noopener/);
+    }
+  });
 });

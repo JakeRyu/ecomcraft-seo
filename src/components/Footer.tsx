@@ -4,7 +4,7 @@ import { ScrollLink } from "@/components/ui/ScrollLink";
 
 type FooterLink =
   | { label: string; targetId: string }
-  | { label: string; href: string };
+  | { label: string; href: string; external?: boolean };
 
 const COLUMNS: { heading: string; links: readonly FooterLink[] }[] = [
   {
@@ -19,18 +19,18 @@ const COLUMNS: { heading: string; links: readonly FooterLink[] }[] = [
   {
     heading: "Company",
     links: [
-      { label: "About", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "About", href: "https://www.ecomcraft.co.uk", external: true },
+      { label: "Contact", href: "https://www.ecomcraft.co.uk/contact", external: true },
       { label: "Privacy Policy", href: "#" },
       { label: "Terms", href: "#" },
     ],
   },
 ];
 
-const META_LINKS: readonly { label: string; href: string }[] = [
+const META_LINKS: readonly FooterLink[] = [
   { label: "Privacy Policy", href: "#" },
   { label: "Terms", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "Contact", href: "https://www.ecomcraft.co.uk/contact", external: true },
 ];
 
 function FooterLinkItem({
@@ -45,6 +45,18 @@ function FooterLinkItem({
       <ScrollLink targetId={link.targetId} className={className}>
         {link.label}
       </ScrollLink>
+    );
+  }
+  if (link.external) {
+    return (
+      <a
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+      >
+        {link.label}
+      </a>
     );
   }
   return (
@@ -96,13 +108,11 @@ export function Footer() {
           </span>
           <div className="flex gap-5">
             {META_LINKS.map((link) => (
-              <Link
+              <FooterLinkItem
                 key={link.label}
-                href={link.href}
+                link={link}
                 className="text-xs font-normal text-white/40 transition-opacity hover:text-white"
-              >
-                {link.label}
-              </Link>
+              />
             ))}
           </div>
         </div>
