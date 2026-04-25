@@ -12,20 +12,34 @@ const PLANS = [
 
 const MAX_KEYWORDS = 5;
 
+type FormErrors = {
+  email?: string;
+  keywords?: string;
+  location?: string;
+  plan?: string;
+};
+
 type ReportFormProps = {
   selectedPlan: string | null;
   onSelectPlan: (plan: string) => void;
 };
 
 export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
+  const [email, setEmail] = useState("");
   const [keywords, setKeywords] = useState<string[]>([]);
   const [kwInput, setKwInput] = useState("");
+  const [location, setLocation] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const clearError = (field: keyof FormErrors) =>
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
 
   const addKeyword = () => {
     const kw = kwInput.trim();
     if (!kw || keywords.length >= MAX_KEYWORDS || keywords.includes(kw)) return;
     setKeywords([...keywords, kw]);
     setKwInput("");
+    clearError("keywords");
   };
 
   const removeKeyword = (kw: string) => {
@@ -39,9 +53,32 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
     }
   };
 
+  const validate = (): FormErrors => {
+    const next: FormErrors = {};
+    if (!email || !email.includes("@")) {
+      next.email = "Please enter a valid email address";
+    }
+    if (keywords.length === 0) {
+      next.keywords = "Please add at least one keyword";
+    }
+    if (!location.trim()) {
+      next.location = "Please enter your location or postcode";
+    }
+    if (!selectedPlan) {
+      next.plan = "Please choose a plan";
+    }
+    return next;
+  };
+
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrors(validate());
   };
+
+  const inputBase =
+    "w-full rounded-full border-[1.5px] bg-canvas px-5 py-3 text-[15px] font-normal text-ink outline-none transition-colors";
+  const inputBorder = (err?: string) =>
+    err ? "border-error focus:border-error" : "border-ink/15 focus:border-ink";
 
   return (
     <section
@@ -60,6 +97,7 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
 
         <form
           onSubmit={onSubmit}
+          noValidate
           className="flex flex-col gap-5 rounded-[40px] bg-white p-[clamp(28px,4vw,48px)] shadow-card"
         >
           <FieldGroup htmlFor="email" label="Email address">
@@ -68,9 +106,14 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
               name="email"
               type="email"
               placeholder="your@email.com"
-              required
-              className="w-full rounded-full border-[1.5px] border-ink/15 bg-canvas px-5 py-3 text-[15px] font-normal text-ink outline-none transition-colors focus:border-ink"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearError("email");
+              }}
+              className={`${inputBase} ${inputBorder(errors.email)}`}
             />
+            {errors.email && <FieldError>{errors.email}</FieldError>}
           </FieldGroup>
 
           <FieldGroup
@@ -111,9 +154,14 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
                   type="text"
                   placeholder="e.g. plumber in Manchester"
                   value={kwInput}
-                  onChange={(e) => setKwInput(e.target.value)}
+                  onChange={(e) => {
+                    setKwInput(e.target.value);
+                    clearError("keywords");
+                  }}
                   onKeyDown={onKwKeyDown}
-                  className="flex-1 rounded-full border-[1.5px] border-ink/15 bg-canvas px-5 py-3 text-[15px] font-normal text-ink outline-none transition-colors focus:border-ink"
+                  className={`flex-1 ${inputBase} ${inputBorder(
+                    errors.keywords && keywords.length === 0 ? errors.keywords : undefined
+                  )}`}
                 />
                 <button
                   type="button"
@@ -129,6 +177,7 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
                 Press Enter or click Add after each keyword
               </div>
             )}
+            {errors.keywords && <FieldError>{errors.keywords}</FieldError>}
           </FieldGroup>
 
           <FieldGroup htmlFor="location" label="Location or postcode">
@@ -137,9 +186,14 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
               name="location"
               type="text"
               placeholder="e.g. Bristol or BS1 4EJ"
-              required
-              className="w-full rounded-full border-[1.5px] border-ink/15 bg-canvas px-5 py-3 text-[15px] font-normal text-ink outline-none transition-colors focus:border-ink"
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                clearError("location");
+              }}
+              className={`${inputBase} ${inputBorder(errors.location)}`}
             />
+            {errors.location && <FieldError>{errors.location}</FieldError>}
           </FieldGroup>
 
           <fieldset>
@@ -153,7 +207,10 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
                   <button
                     key={plan.name}
                     type="button"
-                    onClick={() => onSelectPlan(plan.name)}
+                    onClick={() => {
+                      onSelectPlan(plan.name);
+                      clearError("plan");
+                    }}
                     aria-pressed={sel}
                     className={`flex flex-col items-center gap-0.5 rounded-full border-[1.5px] px-3 py-2.5 text-sm font-medium transition-colors ${
                       sel
@@ -169,6 +226,7 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
                 );
               })}
             </div>
+            {errors.plan && <FieldError>{errors.plan}</FieldError>}
           </fieldset>
 
           <button
@@ -200,6 +258,14 @@ function FieldGroup({
       >
         {label}
       </label>
+      {children}
+    </div>
+  );
+}
+
+function FieldError({ children }: { children: React.ReactNode }) {
+  return (
+    <div role="alert" className="mt-1.5 pl-3 text-xs font-medium text-error">
       {children}
     </div>
   );

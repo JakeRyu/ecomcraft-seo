@@ -247,6 +247,90 @@ test.describe("Report Form", () => {
   });
 });
 
+// ── Report Form validation ──────────────────────────────────────
+
+test.describe("Report Form validation", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() =>
+      document.getElementById("report-form")?.scrollIntoView()
+    );
+  });
+
+  const fillValid = async (page: import("@playwright/test").Page) => {
+    const form = page.locator("#report-form");
+    await form.getByLabel("Email address").fill("test@example.com");
+    const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
+    await kwInput.fill("plumber");
+    await kwInput.press("Enter");
+    await form.getByLabel("Location or postcode").fill("Bristol");
+    await form.getByRole("button", { name: /Starter/ }).click();
+  };
+
+  test("submitting empty form shows all four errors", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter a valid email address")).toBeVisible();
+    await expect(form.getByText("Please add at least one keyword")).toBeVisible();
+    await expect(form.getByText("Please enter your location or postcode")).toBeVisible();
+    await expect(form.getByText("Please choose a plan")).toBeVisible();
+  });
+
+  test("invalid email (no @) shows email error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByLabel("Email address").fill("notanemail");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter a valid email address")).toBeVisible();
+  });
+
+  test("typing in email clears the email error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter a valid email address")).toBeVisible();
+
+    await form.getByLabel("Email address").fill("a");
+    await expect(form.getByText("Please enter a valid email address")).toBeHidden();
+  });
+
+  test("adding a keyword clears the keyword error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please add at least one keyword")).toBeVisible();
+
+    const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
+    await kwInput.fill("plumber");
+    await kwInput.press("Enter");
+    await expect(form.getByText("Please add at least one keyword")).toBeHidden();
+  });
+
+  test("typing in location clears the location error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter your location or postcode")).toBeVisible();
+
+    await form.getByLabel("Location or postcode").fill("B");
+    await expect(form.getByText("Please enter your location or postcode")).toBeHidden();
+  });
+
+  test("selecting a plan clears the plan error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please choose a plan")).toBeVisible();
+
+    await form.getByRole("button", { name: /Starter/ }).click();
+    await expect(form.getByText("Please choose a plan")).toBeHidden();
+  });
+
+  test("valid submission shows no errors", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await fillValid(page);
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter a valid email address")).toBeHidden();
+    await expect(form.getByText("Please add at least one keyword")).toBeHidden();
+    await expect(form.getByText("Please enter your location or postcode")).toBeHidden();
+    await expect(form.getByText("Please choose a plan")).toBeHidden();
+  });
+});
+
 // ── Sample Report ───────────────────────────────────────────────
 
 test.describe("Sample Report", () => {
