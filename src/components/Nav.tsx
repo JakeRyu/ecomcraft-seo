@@ -15,7 +15,10 @@ export function Nav() {
   const close = () => setOpen(false);
 
   return (
-    <div className="fixed left-1/2 top-6 z-50 w-[calc(100%-48px)] max-w-[960px] -translate-x-1/2">
+    <nav
+      aria-label="main navigation"
+      className="fixed left-1/2 top-6 z-50 w-[calc(100%-48px)] max-w-[960px] -translate-x-1/2"
+    >
       <div className="flex items-center rounded-full bg-white px-6 py-3 shadow-card">
         <Link
           href="#top"
@@ -87,6 +90,6 @@ export function Nav() {
           </Link>
         </div>
       )}
-    </div>
+    </nav>
   );
 }
