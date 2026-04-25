@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent, KeyboardEvent } from "react";
+import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
 const PLANS = [
@@ -10,7 +10,25 @@ const PLANS = [
   { name: "Deep Dive", price: "£39" },
 ] as const;
 
+const PLAN_LIMITS = {
+  Snapshot: 1,
+  Insight: 2,
+  "Deep Dive": 5,
+} as const;
+
+type PlanName = keyof typeof PLAN_LIMITS;
+const PLAN_ORDER: PlanName[] = ["Snapshot", "Insight", "Deep Dive"];
 const MAX_KEYWORDS = 5;
+
+const isPlanName = (p: string | null): p is PlanName =>
+  p !== null && p in PLAN_LIMITS;
+
+// Upgrade path: always immediate next tier (Snapshot → Insight → Deep Dive → none).
+const getNextPlan = (plan: PlanName | null): PlanName | null => {
+  if (!plan) return null;
+  const idx = PLAN_ORDER.indexOf(plan);
+  return idx < PLAN_ORDER.length - 1 ? PLAN_ORDER[idx + 1] : null;
+};
 
 type FormErrors = {
   email?: string;
@@ -31,12 +49,21 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
   const [location, setLocation] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
 
+  const planName: PlanName | null = isPlanName(selectedPlan)
+    ? selectedPlan
+    : null;
+  const limit = planName ? PLAN_LIMITS[planName] : MAX_KEYWORDS;
+  const nextPlan = getNextPlan(planName);
+  const atCap = keywords.length >= limit;
+  const overCount = planName ? Math.max(0, keywords.length - limit) : 0;
+  const isOverLimit = overCount > 0;
+
   const clearError = (field: keyof FormErrors) =>
     setErrors((prev) => ({ ...prev, [field]: undefined }));
 
-  const addKeyword = () => {
-    const kw = kwInput.trim();
-    if (!kw || keywords.length >= MAX_KEYWORDS || keywords.includes(kw)) return;
+  const tryAddKeyword = (raw: string) => {
+    const kw = raw.trim();
+    if (!kw || keywords.length >= limit || keywords.includes(kw)) return;
     setKeywords([...keywords, kw]);
     setKwInput("");
     clearError("keywords");
@@ -49,11 +76,7 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
   const onKwKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
-    const kw = e.currentTarget.value.trim();
-    if (!kw || keywords.length >= MAX_KEYWORDS || keywords.includes(kw)) return;
-    setKeywords([...keywords, kw]);
-    setKwInput("");
-    clearError("keywords");
+    tryAddKeyword(e.currentTarget.value);
   };
 
   const validate = (): FormErrors => {
@@ -63,6 +86,11 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
     }
     if (keywords.length === 0) {
       next.keywords = "Please add at least one keyword";
+    } else if (planName && keywords.length > limit) {
+      const over = keywords.length - limit;
+      next.keywords = `Your ${planName} plan supports ${limit} keyword set${
+        limit === 1 ? "" : "s"
+      }. Remove ${over} to continue.`;
     }
     if (!location.trim()) {
       next.location = "Please enter your location or postcode";
@@ -125,61 +153,154 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
               <>
                 Target keywords{" "}
                 <span className="font-normal normal-case tracking-normal">
-                  — up to 5
+                  — up to {limit}
                 </span>
               </>
+            }
+            trailing={
+              <span
+                aria-live="polite"
+                className={`rounded-full bg-canvas px-2.5 py-1 text-[11px] font-medium tabular-nums normal-case tracking-normal ${
+                  atCap ? "text-ink" : "text-slate"
+                }`}
+              >
+                {keywords.length} / {limit}
+                {!planName && (
+                  <span className="ml-1 opacity-60">· max</span>
+                )}
+              </span>
             }
           >
             {keywords.length > 0 && (
               <div className="mb-2.5 flex flex-wrap gap-2">
-                {keywords.map((kw) => (
-                  <div
-                    key={kw}
-                    className="flex items-center gap-2 rounded-full bg-canvas px-3.5 py-1.5 text-[13px] font-medium text-ink"
+                {keywords.map((kw, i) => {
+                  const over = planName !== null && i >= limit;
+                  return (
+                    <div
+                      key={kw}
+                      className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-medium ${
+                        over
+                          ? "border-dashed border-error bg-[#FCE8DD] text-error"
+                          : "border-transparent bg-canvas text-ink"
+                      }`}
+                    >
+                      {over && (
+                        <span className="text-[10px] font-bold uppercase tracking-[0.04em]">
+                          Over limit
+                        </span>
+                      )}
+                      {kw}
+                      <button
+                        type="button"
+                        onClick={() => removeKeyword(kw)}
+                        aria-label={`Remove ${kw}`}
+                        className={`flex items-center text-sm leading-none ${
+                          over
+                            ? "text-error hover:opacity-70"
+                            : "text-slate hover:text-ink"
+                        }`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {!atCap ? (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    id="keyword-input"
+                    type="text"
+                    placeholder="e.g. plumber in Manchester"
+                    value={kwInput}
+                    onChange={(e) => {
+                      setKwInput(e.target.value);
+                      clearError("keywords");
+                    }}
+                    onKeyDown={onKwKeyDown}
+                    className={`flex-1 ${inputBase} ${inputBorder(
+                      errors.keywords && keywords.length === 0
+                        ? errors.keywords
+                        : undefined
+                    )}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => tryAddKeyword(kwInput)}
+                    className="shrink-0 rounded-full bg-ink px-5 text-sm font-medium text-canvas transition-opacity hover:opacity-85"
                   >
-                    {kw}
+                    Add
+                  </button>
+                </div>
+                {keywords.length === 0 && (
+                  <div className="mt-1.5 pl-3 text-xs text-slate">
+                    Press Enter or click Add after each keyword
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="mt-1 flex flex-wrap items-center gap-2 pl-3">
+                <span className="text-[13px] text-slate">
+                  {planName ? `${planName} plan limit reached.` : "Limit reached."}
+                </span>
+                {nextPlan && (
+                  <>
+                    <span className="text-[13px] text-slate">Need more?</span>
                     <button
                       type="button"
-                      onClick={() => removeKeyword(kw)}
-                      aria-label={`Remove ${kw}`}
-                      className="flex items-center text-sm leading-none text-slate hover:text-ink"
+                      onClick={() => {
+                        onSelectPlan(nextPlan);
+                        clearError("plan");
+                      }}
+                      className="rounded-full border-[1.5px] border-ink/15 px-3.5 py-1 text-[12px] font-medium text-ink transition-colors hover:border-ink/40"
                     >
-                      ×
+                      Upgrade to {nextPlan} →
                     </button>
-                  </div>
-                ))}
+                  </>
+                )}
               </div>
             )}
-            {keywords.length < MAX_KEYWORDS && (
-              <div className="flex gap-2">
-                <input
-                  id="keyword-input"
-                  type="text"
-                  placeholder="e.g. plumber in Manchester"
-                  value={kwInput}
-                  onChange={(e) => {
-                    setKwInput(e.target.value);
-                    clearError("keywords");
-                  }}
-                  onKeyDown={onKwKeyDown}
-                  className={`flex-1 ${inputBase} ${inputBorder(
-                    errors.keywords && keywords.length === 0 ? errors.keywords : undefined
-                  )}`}
-                />
-                <button
-                  type="button"
-                  onClick={addKeyword}
-                  className="shrink-0 rounded-full bg-ink px-5 text-sm font-medium text-canvas transition-opacity hover:opacity-85"
+
+            {isOverLimit && (
+              <div
+                role="alert"
+                className="mt-2 flex items-start gap-3 rounded-2xl border bg-[#FCE8DD] p-4"
+                style={{ borderColor: "rgba(207,69,0,0.25)" }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 text-base font-bold leading-none text-error"
                 >
-                  Add
-                </button>
+                  !
+                </span>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-error">
+                    {overCount} keyword{overCount === 1 ? "" : "s"} exceed your{" "}
+                    {planName} plan
+                  </div>
+                  <p className="mt-1 text-xs text-slate">
+                    Remove the highlighted ones
+                    {nextPlan ? `, or upgrade to ${nextPlan} to keep them` : ""}.
+                  </p>
+                </div>
+                {nextPlan && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectPlan(nextPlan);
+                      clearError("plan");
+                    }}
+                    className="shrink-0 self-center rounded-full bg-ink px-4 py-1.5 text-xs font-medium text-canvas transition-opacity hover:opacity-85"
+                  >
+                    Upgrade
+                  </button>
+                )}
               </div>
             )}
-            {keywords.length === 0 && (
-              <div className="mt-1.5 pl-3 text-xs text-slate">
-                Press Enter or click Add after each keyword
-              </div>
-            )}
+
             {errors.keywords && <FieldError>{errors.keywords}</FieldError>}
           </FieldGroup>
 
@@ -247,26 +368,31 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
 function FieldGroup({
   htmlFor,
   label,
+  trailing,
   children,
 }: {
   htmlFor: string;
-  label: React.ReactNode;
-  children: React.ReactNode;
+  label: ReactNode;
+  trailing?: ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div>
-      <label
-        htmlFor={htmlFor}
-        className="mb-2 block text-xs font-bold uppercase tracking-[0.04em] text-slate"
-      >
-        {label}
-      </label>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <label
+          htmlFor={htmlFor}
+          className="block text-xs font-bold uppercase tracking-[0.04em] text-slate"
+        >
+          {label}
+        </label>
+        {trailing}
+      </div>
       {children}
     </div>
   );
 }
 
-function FieldError({ children }: { children: React.ReactNode }) {
+function FieldError({ children }: { children: ReactNode }) {
   return (
     <div role="alert" className="mt-1.5 pl-3 text-xs font-medium text-error">
       {children}

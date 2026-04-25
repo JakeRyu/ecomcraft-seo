@@ -1,3 +1,4 @@
+# Build app
 ## Implementation
 
 I'm building a website using Next.js (App Router) + Tailwind CSS, deployed to Vercel.
@@ -18,3 +19,9 @@ Implement: index.html
 - If you identify any reusable UI elements (e.g. a card, a section header), extract them into src/components/ui/
 - Form fields are UI only — no submission logic needed
 - All CTA buttons labelled "Get My Visibility Report" should link to form that has a submit button
+
+# Post process todos
+[] Connect google analytics
+[] email verification
+
+# Prompts
