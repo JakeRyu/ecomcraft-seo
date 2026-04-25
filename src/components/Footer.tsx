@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
+import { ScrollLink } from "@/components/ui/ScrollLink";
 
-const COLUMNS = [
+type FooterLink =
+  | { label: string; targetId: string }
+  | { label: string; href: string };
+
+const COLUMNS: { heading: string; links: readonly FooterLink[] }[] = [
   {
     heading: "Product",
     links: [
-      { label: "How it works", href: "#how-it-works" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Sample Report", href: "#sample-report" },
+      { label: "How it works", targetId: "how-it-works" },
+      { label: "Pricing", targetId: "pricing" },
+      { label: "Sample Report", targetId: "sample-report" },
       { label: "FAQ", href: "#" },
     ],
   },
@@ -20,13 +25,34 @@ const COLUMNS = [
       { label: "Terms", href: "#" },
     ],
   },
-] as const;
+];
 
-const META_LINKS = [
+const META_LINKS: readonly { label: string; href: string }[] = [
   { label: "Privacy Policy", href: "#" },
   { label: "Terms", href: "#" },
   { label: "Contact", href: "#" },
-] as const;
+];
+
+function FooterLinkItem({
+  link,
+  className,
+}: {
+  link: FooterLink;
+  className: string;
+}) {
+  if ("targetId" in link) {
+    return (
+      <ScrollLink targetId={link.targetId} className={className}>
+        {link.label}
+      </ScrollLink>
+    );
+  }
+  return (
+    <Link href={link.href} className={className}>
+      {link.label}
+    </Link>
+  );
+}
 
 export function Footer() {
   return (
@@ -49,13 +75,11 @@ export function Footer() {
                 </div>
                 <div className="flex flex-col gap-2.5">
                   {col.links.map((link) => (
-                    <Link
+                    <FooterLinkItem
                       key={link.label}
-                      href={link.href}
+                      link={link}
                       className="text-sm font-normal leading-5 text-white/75 transition-opacity hover:text-white"
-                    >
-                      {link.label}
-                    </Link>
+                    />
                   ))}
                 </div>
               </div>

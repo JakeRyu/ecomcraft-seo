@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { ScrollLink } from "@/components/ui/ScrollLink";
 import { HeroScoreCard } from "./HeroScoreCard";
@@ -43,12 +42,12 @@ export function Hero() {
             >
               Get My Visibility Report
             </ScrollLink>
-            <Link
-              href="#sample-report"
+            <ScrollLink
+              targetId="sample-report"
               className="rounded-full border-[1.5px] border-ink/25 bg-white px-7 py-3 text-[15px] font-normal tracking-[-0.03em] text-ink transition-colors hover:border-ink/50"
             >
               See sample report
-            </Link>
+            </ScrollLink>
           </div>
 
           <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3">
