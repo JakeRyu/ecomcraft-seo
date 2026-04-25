@@ -167,9 +167,12 @@ test.describe("Pricing plan selection", () => {
 
       await btn.click();
 
-      // The report form section should be scrolled into view
-      const form = page.locator("#report-form");
-      await expect(form).toBeInViewport({ ratio: 0.5 });
+      // The form's top heading should be on-screen after the scroll
+      // (use the heading rather than the section, which is taller than the
+      // mobile viewport and can never reach a 50% ratio).
+      await expect(
+        page.getByRole("heading", { name: "Request your visibility report" })
+      ).toBeInViewport();
     });
 
     test(`clicking ${plan} pre-selects that plan in the report form`, async ({
@@ -201,9 +204,12 @@ test.describe("Report Form", () => {
 
   test("shows all form fields", async ({ page }) => {
     const form = page.locator("#report-form");
+    await expect(form.getByLabel("Business name")).toBeVisible();
+    await expect(form.getByLabel("Website")).toBeVisible();
+    await expect(form.getByLabel("Postcode", { exact: true })).toBeVisible();
     await expect(form.getByLabel("Email address")).toBeVisible();
     await expect(form.getByLabel(/Target keywords/)).toBeVisible();
-    await expect(form.getByLabel("Location or postcode")).toBeVisible();
+    await expect(form.getByLabel("Service area or target city")).toBeVisible();
     await expect(form.getByRole("group", { name: "Report plan" })).toBeVisible();
   });
 
@@ -258,21 +264,27 @@ test.describe("Report Form validation", () => {
 
   const fillValid = async (page: import("@playwright/test").Page) => {
     const form = page.locator("#report-form");
+    await form.getByLabel("Business name").fill("Smith & Sons Plumbing Ltd");
+    await form.getByLabel("Website").fill("https://smithsplumbing.co.uk");
+    await form.getByLabel("Postcode", { exact: true }).fill("BS1 4EJ");
     await form.getByLabel("Email address").fill("test@example.com");
     const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
     await kwInput.fill("plumber");
     await kwInput.press("Enter");
-    await form.getByLabel("Location or postcode").fill("Bristol");
+    await form.getByLabel("Service area or target city").fill("Bristol");
     await form.getByRole("button", { name: /Snapshot/ }).click();
   };
 
-  test("submitting empty form shows all four errors", async ({ page }) => {
+  test("submitting empty form shows all required-field errors", async ({ page }) => {
     const form = page.locator("#report-form");
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter your business name")).toBeVisible();
+    await expect(form.getByText("Please enter your website")).toBeVisible();
+    await expect(form.getByText("Please enter your postcode")).toBeVisible();
     await expect(form.getByText("Please enter a valid email address")).toBeVisible();
     await expect(form.getByText("Please add at least one keyword")).toBeVisible();
-    await expect(form.getByText("Please enter your location or postcode")).toBeVisible();
     await expect(form.getByText("Please choose a plan")).toBeVisible();
+    await expect(form.getByText("Please enter your service area")).toBeVisible();
   });
 
   test("invalid email (no @) shows email error", async ({ page }) => {
@@ -302,13 +314,13 @@ test.describe("Report Form validation", () => {
     await expect(form.getByText("Please add at least one keyword")).toBeHidden();
   });
 
-  test("typing in location clears the location error", async ({ page }) => {
+  test("typing in service area clears the service-area error", async ({ page }) => {
     const form = page.locator("#report-form");
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
-    await expect(form.getByText("Please enter your location or postcode")).toBeVisible();
+    await expect(form.getByText("Please enter your service area")).toBeVisible();
 
-    await form.getByLabel("Location or postcode").fill("B");
-    await expect(form.getByText("Please enter your location or postcode")).toBeHidden();
+    await form.getByLabel("Service area or target city").fill("B");
+    await expect(form.getByText("Please enter your service area")).toBeHidden();
   });
 
   test("selecting a plan clears the plan error", async ({ page }) => {
@@ -324,10 +336,134 @@ test.describe("Report Form validation", () => {
     const form = page.locator("#report-form");
     await fillValid(page);
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter your business name")).toBeHidden();
+    await expect(form.getByText("Please enter your website")).toBeHidden();
+    await expect(form.getByText("Please enter your postcode")).toBeHidden();
     await expect(form.getByText("Please enter a valid email address")).toBeHidden();
     await expect(form.getByText("Please add at least one keyword")).toBeHidden();
-    await expect(form.getByText("Please enter your location or postcode")).toBeHidden();
+    await expect(form.getByText("Please enter your service area")).toBeHidden();
     await expect(form.getByText("Please choose a plan")).toBeHidden();
+  });
+});
+
+// ── Report Form business identity fields ────────────────────────
+
+test.describe("Report Form business identity", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() =>
+      document.getElementById("report-form")?.scrollIntoView()
+    );
+  });
+
+  test("section headers are numbered 1 and 2", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await expect(form.getByText("About your business")).toBeVisible();
+    await expect(form.getByText("What to analyse")).toBeVisible();
+  });
+
+  test("postcode input auto-uppercases", async ({ page }) => {
+    const form = page.locator("#report-form");
+    const postcode = form.getByLabel("Postcode", { exact: true });
+    await postcode.fill("bs1 4ej");
+    await expect(postcode).toHaveValue("BS1 4EJ");
+  });
+
+  test("typing in business name clears the business name error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter your business name")).toBeVisible();
+
+    await form.getByLabel("Business name").fill("S");
+    await expect(form.getByText("Please enter your business name")).toBeHidden();
+  });
+
+  test("typing in website clears the website error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter your website")).toBeVisible();
+
+    await form.getByLabel("Website").fill("h");
+    await expect(form.getByText("Please enter your website")).toBeHidden();
+  });
+
+  test("typing in postcode clears the postcode error", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+    await expect(form.getByText("Please enter your postcode")).toBeVisible();
+
+    await form.getByLabel("Postcode", { exact: true }).fill("B");
+    await expect(form.getByText("Please enter your postcode")).toBeHidden();
+  });
+
+  test("business name shows GBP-matching helper text by default", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await expect(
+      form.getByText(
+        "Use the exact name on your Google Business Profile for best matching"
+      )
+    ).toBeVisible();
+  });
+
+  test("optional reveal is collapsed by default with +60% MATCH pill", async ({ page }) => {
+    const form = page.locator("#report-form");
+    const trigger = form.getByRole("button", { name: /Improve report accuracy/ });
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(form.getByText("+60% Match")).toBeVisible();
+    await expect(form.getByLabel(/Google Business Profile URL/)).toBeHidden();
+  });
+
+  test("clicking optional reveal expands fields and hides the pill", async ({ page }) => {
+    const form = page.locator("#report-form");
+    const trigger = form.getByRole("button", { name: /Improve report accuracy/ });
+    await trigger.click();
+
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(form.getByText("+60% Match")).toBeHidden();
+    await expect(form.getByLabel(/Google Business Profile URL/)).toBeVisible();
+    await expect(form.getByLabel(/^Phone/)).toBeVisible();
+    await expect(form.getByLabel(/^Category/)).toBeVisible();
+  });
+
+  test("clicking optional reveal again collapses the panel", async ({ page }) => {
+    const form = page.locator("#report-form");
+    const trigger = form.getByRole("button", { name: /Improve report accuracy/ });
+    await trigger.click();
+    await trigger.click();
+
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(form.getByLabel(/Google Business Profile URL/)).toBeHidden();
+    await expect(form.getByText("+60% Match")).toBeVisible();
+  });
+
+  test("optional fields never trigger validation errors when blank", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByLabel("Business name").fill("Acme Ltd");
+    await form.getByLabel("Website").fill("https://acme.co.uk");
+    await form.getByLabel("Postcode", { exact: true }).fill("BS1 4EJ");
+    await form.getByLabel("Email address").fill("a@b.com");
+    const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
+    await kwInput.fill("plumber");
+    await kwInput.press("Enter");
+    await form.getByLabel("Service area or target city").fill("Bristol");
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+
+    // No error messages anywhere in the form
+    await expect(form.locator('[role="alert"]')).toHaveCount(0);
+  });
+
+  test("category select is hidden until panel is expanded, then shows all options", async ({
+    page,
+  }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: /Improve report accuracy/ }).click();
+
+    const select = form.getByLabel(/^Category/);
+    await expect(select).toBeVisible();
+    // Pick one category and verify the value sticks
+    await select.selectOption("Trades (plumber, electrician, builder)");
+    await expect(select).toHaveValue("Trades (plumber, electrician, builder)");
   });
 });
 
@@ -447,7 +583,7 @@ test.describe("Report Form keyword limits per plan", () => {
     await addKeywords(page, ["aa", "bb"]);
     await form.getByRole("button", { name: /Snapshot/ }).click();
     await form.getByLabel("Email address").fill("a@b.com");
-    await form.getByLabel("Location or postcode").fill("Bristol");
+    await form.getByLabel("Service area or target city").fill("Bristol");
 
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
 
