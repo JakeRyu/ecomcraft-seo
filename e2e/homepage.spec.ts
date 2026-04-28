@@ -124,9 +124,9 @@ test.describe("Pricing", () => {
 
   test("shows correct prices", async ({ page }) => {
     const pricing = page.locator("#pricing");
-    await expect(pricing.getByText("£9", { exact: true })).toBeVisible();
-    await expect(pricing.getByText("£19", { exact: true })).toBeVisible();
-    await expect(pricing.getByText("£39", { exact: true })).toBeVisible();
+    await expect(pricing.getByText("£29", { exact: true })).toBeVisible();
+    await expect(pricing.getByText("£99", { exact: true })).toBeVisible();
+    await expect(pricing.getByText("£499", { exact: true })).toBeVisible();
   });
 
   test("Insight card has Most Popular badge", async ({ page }) => {
@@ -239,13 +239,13 @@ test.describe("Report Form", () => {
   test("plan selector shows all three plans with prices", async ({ page }) => {
     const form = page.locator("#report-form");
     await expect(
-      form.getByRole("button", { name: /Snapshot/ }).filter({ hasText: "£9" })
+      form.getByRole("button", { name: /Snapshot/ }).filter({ hasText: "£29" })
     ).toBeVisible();
     await expect(
-      form.getByRole("button", { name: /Insight/ }).filter({ hasText: "£19" })
+      form.getByRole("button", { name: /Insight/ }).filter({ hasText: "£99" })
     ).toBeVisible();
     await expect(
-      form.getByRole("button", { name: /Deep Dive/ }).filter({ hasText: "£39" })
+      form.getByRole("button", { name: /Deep Dive/ }).filter({ hasText: "£499" })
     ).toBeVisible();
   });
 });
@@ -354,9 +354,9 @@ test.describe("Report Form keyword limits per plan", () => {
     }
   };
 
-  test("counter chip shows 0 / 5 · max when no plan selected", async ({ page }) => {
+  test("counter chip shows 0 / 10 · max when no plan selected", async ({ page }) => {
     const form = page.locator("#report-form");
-    const chip = form.getByText(/0 \/ 5/);
+    const chip = form.getByText(/0 \/ 10/);
     await expect(chip).toBeVisible();
     await expect(chip).toContainText("· max");
   });
@@ -372,7 +372,7 @@ test.describe("Report Form keyword limits per plan", () => {
   test("counter increments when a keyword is added", async ({ page }) => {
     const form = page.locator("#report-form");
     await addKeywords(page, ["plumber"]);
-    await expect(form.getByText(/1 \/ 5/)).toBeVisible();
+    await expect(form.getByText(/1 \/ 10/)).toBeVisible();
   });
 
   test("Snapshot at cap (1) hides input and shows upgrade prompt to Insight", async ({ page }) => {
@@ -388,10 +388,10 @@ test.describe("Report Form keyword limits per plan", () => {
     ).toBeVisible();
   });
 
-  test("Deep Dive at cap (5) shows limit reached without upgrade button", async ({ page }) => {
+  test("Deep Dive at cap (10) shows limit reached without upgrade button", async ({ page }) => {
     const form = page.locator("#report-form");
     await form.getByRole("button", { name: /Deep Dive/ }).click();
-    await addKeywords(page, ["a", "b", "c", "d", "e"]);
+    await addKeywords(page, ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
 
     await expect(form.getByText("Deep Dive plan limit reached.")).toBeVisible();
     await expect(form.getByText("Need more?")).toBeHidden();
@@ -412,7 +412,7 @@ test.describe("Report Form keyword limits per plan", () => {
 
     const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
     await expect(kwInput).toBeVisible();
-    await expect(form.getByText(/1 \/ 2/)).toBeVisible();
+    await expect(form.getByText(/1 \/ 5/)).toBeVisible();
   });
 
   test("tags persist when downgrading to a smaller plan", async ({ page }) => {
