@@ -30,22 +30,7 @@ const getNextPlan = (plan: PlanName | null): PlanName | null => {
   return idx < PLAN_ORDER.length - 1 ? PLAN_ORDER[idx + 1] : null;
 };
 
-const BUSINESS_CATEGORIES = [
-  "Restaurant / Café",
-  "Retail shop",
-  "Trades (plumber, electrician, builder)",
-  "Beauty & wellness",
-  "Professional services (legal, accounting)",
-  "Health & medical",
-  "Auto services",
-  "Home services",
-  "Other",
-] as const;
-
 type FormErrors = {
-  bizName?: string;
-  website?: string;
-  postcode?: string;
   email?: string;
   keywords?: string;
   plan?: string;
@@ -58,13 +43,6 @@ type ReportFormProps = {
 };
 
 export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
-  const [bizName, setBizName] = useState("");
-  const [website, setWebsite] = useState("");
-  const [postcode, setPostcode] = useState("");
-  const [gbpUrl, setGbpUrl] = useState("");
-  const [phone, setPhone] = useState("");
-  const [category, setCategory] = useState("");
-  const [showOptional, setShowOptional] = useState(false);
   const [email, setEmail] = useState("");
   const [keywords, setKeywords] = useState<string[]>([]);
   const [kwInput, setKwInput] = useState("");
@@ -103,15 +81,6 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
 
   const validate = (): FormErrors => {
     const next: FormErrors = {};
-    if (!bizName.trim()) {
-      next.bizName = "Please enter your business name";
-    }
-    if (!website.trim()) {
-      next.website = "Please enter your website";
-    }
-    if (!postcode.trim()) {
-      next.postcode = "Please enter your postcode";
-    }
     if (!email || !email.includes("@")) {
       next.email = "Please enter a valid email address";
     }
@@ -142,12 +111,6 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
   const inputBorder = (err?: string) =>
     err ? "border-error focus:border-error" : "border-ink/15 focus:border-ink";
 
-  const optionalSuffix = (
-    <span className="font-normal normal-case tracking-normal text-dust">
-      · optional
-    </span>
-  );
-
   return (
     <section
       id="report-form"
@@ -168,203 +131,6 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
           noValidate
           className="flex flex-col gap-5 rounded-[40px] bg-white p-[clamp(28px,4vw,48px)] shadow-card"
         >
-          <SectionHeader num={1} label="About your business" />
-
-          <FieldGroup htmlFor="bizName" label="Business name">
-            <input
-              id="bizName"
-              name="bizName"
-              type="text"
-              placeholder="e.g. Smith & Sons Plumbing Ltd"
-              value={bizName}
-              onChange={(e) => {
-                setBizName(e.target.value);
-                clearError("bizName");
-              }}
-              className={`${inputBase} ${inputBorder(errors.bizName)}`}
-            />
-            {errors.bizName ? (
-              <FieldError>{errors.bizName}</FieldError>
-            ) : (
-              <FieldHelper>
-                Use the exact name on your Google Business Profile for best
-                matching
-              </FieldHelper>
-            )}
-          </FieldGroup>
-
-          <div className="grid grid-cols-1 gap-3 min-[541px]:grid-cols-2">
-            <FieldGroup htmlFor="website" label="Website">
-              <input
-                id="website"
-                name="website"
-                type="url"
-                placeholder="https://yourbusiness.co.uk"
-                value={website}
-                onChange={(e) => {
-                  setWebsite(e.target.value);
-                  clearError("website");
-                }}
-                className={`${inputBase} ${inputBorder(errors.website)}`}
-              />
-              {errors.website && <FieldError>{errors.website}</FieldError>}
-            </FieldGroup>
-
-            <FieldGroup htmlFor="postcode" label="Postcode">
-              <input
-                id="postcode"
-                name="postcode"
-                type="text"
-                placeholder="BS1 4EJ"
-                value={postcode}
-                onChange={(e) => {
-                  setPostcode(e.target.value.toUpperCase());
-                  clearError("postcode");
-                }}
-                className={`${inputBase} ${inputBorder(errors.postcode)}`}
-              />
-              {errors.postcode && <FieldError>{errors.postcode}</FieldError>}
-            </FieldGroup>
-          </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowOptional((v) => !v)}
-              aria-expanded={showOptional}
-              aria-controls="optional-fields"
-              className="block w-full rounded-2xl border border-dashed px-5 py-3.5 text-left transition-colors hover:border-ink/30"
-              style={{ borderColor: "rgba(20,20,19,0.2)" }}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium text-ink">
-                    Improve report accuracy
-                  </span>
-                  {!showOptional && (
-                    <span
-                      className="rounded-full bg-signal px-2 py-0.5 text-[10px] font-bold uppercase text-white"
-                      style={{ letterSpacing: "0.4px" }}
-                    >
-                      +60% Match
-                    </span>
-                  )}
-                </div>
-                <span
-                  aria-hidden="true"
-                  className={`text-slate transition-transform duration-200 ${
-                    showOptional ? "rotate-180" : ""
-                  }`}
-                >
-                  ▾
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-slate">
-                Add your Google Business Profile link, phone, and category —
-                optional
-              </p>
-            </button>
-
-            {showOptional && (
-              <div
-                id="optional-fields"
-                className="mt-3 flex flex-col gap-3 border-l-2 border-ghost py-1 pl-4"
-              >
-                <FieldGroup
-                  htmlFor="gbpUrl"
-                  label={
-                    <>
-                      Google Business Profile URL {optionalSuffix}
-                    </>
-                  }
-                >
-                  <input
-                    id="gbpUrl"
-                    name="gbpUrl"
-                    type="url"
-                    placeholder="https://maps.app.goo.gl/..."
-                    value={gbpUrl}
-                    onChange={(e) => setGbpUrl(e.target.value)}
-                    className={`${inputBase} ${inputBorder(undefined)}`}
-                  />
-                  <FieldHelper>
-                    Find yours at{" "}
-                    <a
-                      href="https://google.com/business"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-link-blue underline"
-                    >
-                      google.com/business
-                    </a>{" "}
-                    → Share
-                  </FieldHelper>
-                </FieldGroup>
-
-                <div className="grid grid-cols-1 gap-3 min-[541px]:grid-cols-2">
-                  <FieldGroup
-                    htmlFor="phone"
-                    label={<>Phone {optionalSuffix}</>}
-                  >
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+44 117 123 4567"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className={`${inputBase} ${inputBorder(undefined)}`}
-                    />
-                  </FieldGroup>
-
-                  <FieldGroup
-                    htmlFor="category"
-                    label={<>Category {optionalSuffix}</>}
-                  >
-                    <div className="relative">
-                      <select
-                        id="category"
-                        name="category"
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className={`w-full appearance-none rounded-full border-[1.5px] border-ink/15 bg-canvas px-5 py-3 pr-10 text-[15px] font-normal outline-none transition-colors focus:border-ink ${
-                          category === "" ? "text-slate" : "text-ink"
-                        }`}
-                      >
-                        <option value="" disabled>
-                          Select category…
-                        </option>
-                        {BUSINESS_CATEGORIES.map((c) => (
-                          <option key={c} value={c} className="text-ink">
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                      <svg
-                        aria-hidden="true"
-                        width="12"
-                        height="8"
-                        viewBox="0 0 12 8"
-                        className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-slate"
-                      >
-                        <path
-                          d="M1 1l5 5 5-5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          fill="none"
-                        />
-                      </svg>
-                    </div>
-                  </FieldGroup>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div role="separator" aria-hidden="true" className="h-px bg-ghost" />
-
-          <SectionHeader num={2} label="What to analyse" />
-
           <FieldGroup htmlFor="email" label="Email address">
             <input
               id="email"
@@ -599,19 +365,6 @@ export function ReportForm({ selectedPlan, onSelectPlan }: ReportFormProps) {
   );
 }
 
-function SectionHeader({ num, label }: { num: 1 | 2; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-[12px] font-bold leading-none text-canvas">
-        {num}
-      </span>
-      <span className="text-[13px] font-bold uppercase tracking-[0.04em] text-ink">
-        {label}
-      </span>
-    </div>
-  );
-}
-
 function FieldGroup({
   htmlFor,
   label,
@@ -645,8 +398,4 @@ function FieldError({ children }: { children: ReactNode }) {
       {children}
     </div>
   );
-}
-
-function FieldHelper({ children }: { children: ReactNode }) {
-  return <div className="mt-1.5 pl-3 text-xs text-slate">{children}</div>;
 }
