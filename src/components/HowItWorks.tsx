@@ -4,15 +4,15 @@ import { StepCard } from "@/components/ui/StepCard";
 const STEPS = [
   {
     number: "01",
-    title: "Enter your keywords",
-    description:
-      "Tell us your business type, target keywords, and UK location.",
-  },
-  {
-    number: "02",
     title: "Choose your plan",
     description:
       "Pick the report that fits your needs — pay once, no subscription.",
+  },
+  {
+    number: "02",
+    title: "Enter your keywords",
+    description:
+      "Tell us your business type, target keywords, and UK location.",
   },
   {
     number: "03",
