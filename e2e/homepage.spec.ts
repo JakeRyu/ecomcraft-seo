@@ -167,9 +167,12 @@ test.describe("Pricing plan selection", () => {
 
       await btn.click();
 
-      // The report form section should be scrolled into view
-      const form = page.locator("#report-form");
-      await expect(form).toBeInViewport({ ratio: 0.5 });
+      // The form's top heading should be on-screen after the scroll
+      // (use the heading rather than the section, which is taller than the
+      // mobile viewport and can never reach a 50% ratio).
+      await expect(
+        page.getByRole("heading", { name: "Request your visibility report" })
+      ).toBeInViewport();
     });
 
     test(`clicking ${plan} pre-selects that plan in the report form`, async ({
@@ -203,7 +206,7 @@ test.describe("Report Form", () => {
     const form = page.locator("#report-form");
     await expect(form.getByLabel("Email address")).toBeVisible();
     await expect(form.getByLabel(/Target keywords/)).toBeVisible();
-    await expect(form.getByLabel("Location or postcode")).toBeVisible();
+    await expect(form.getByLabel("Service area or target city")).toBeVisible();
     await expect(form.getByRole("group", { name: "Report plan" })).toBeVisible();
   });
 
@@ -262,17 +265,17 @@ test.describe("Report Form validation", () => {
     const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
     await kwInput.fill("plumber");
     await kwInput.press("Enter");
-    await form.getByLabel("Location or postcode").fill("Bristol");
+    await form.getByLabel("Service area or target city").fill("Bristol");
     await form.getByRole("button", { name: /Snapshot/ }).click();
   };
 
-  test("submitting empty form shows all four errors", async ({ page }) => {
+  test("submitting empty form shows all required-field errors", async ({ page }) => {
     const form = page.locator("#report-form");
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
     await expect(form.getByText("Please enter a valid email address")).toBeVisible();
     await expect(form.getByText("Please add at least one keyword")).toBeVisible();
-    await expect(form.getByText("Please enter your location or postcode")).toBeVisible();
     await expect(form.getByText("Please choose a plan")).toBeVisible();
+    await expect(form.getByText("Please enter your service area")).toBeVisible();
   });
 
   test("invalid email (no @) shows email error", async ({ page }) => {
@@ -302,13 +305,13 @@ test.describe("Report Form validation", () => {
     await expect(form.getByText("Please add at least one keyword")).toBeHidden();
   });
 
-  test("typing in location clears the location error", async ({ page }) => {
+  test("typing in service area clears the service-area error", async ({ page }) => {
     const form = page.locator("#report-form");
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
-    await expect(form.getByText("Please enter your location or postcode")).toBeVisible();
+    await expect(form.getByText("Please enter your service area")).toBeVisible();
 
-    await form.getByLabel("Location or postcode").fill("B");
-    await expect(form.getByText("Please enter your location or postcode")).toBeHidden();
+    await form.getByLabel("Service area or target city").fill("B");
+    await expect(form.getByText("Please enter your service area")).toBeHidden();
   });
 
   test("selecting a plan clears the plan error", async ({ page }) => {
@@ -326,8 +329,150 @@ test.describe("Report Form validation", () => {
     await form.getByRole("button", { name: "Get My Visibility Report" }).click();
     await expect(form.getByText("Please enter a valid email address")).toBeHidden();
     await expect(form.getByText("Please add at least one keyword")).toBeHidden();
-    await expect(form.getByText("Please enter your location or postcode")).toBeHidden();
+    await expect(form.getByText("Please enter your service area")).toBeHidden();
     await expect(form.getByText("Please choose a plan")).toBeHidden();
+  });
+});
+
+// ── Report Form keyword limits per plan ─────────────────────────
+
+test.describe("Report Form keyword limits per plan", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() =>
+      document.getElementById("report-form")?.scrollIntoView()
+    );
+  });
+
+  const addKeywords = async (
+    page: import("@playwright/test").Page,
+    words: string[]
+  ) => {
+    const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
+    for (const w of words) {
+      await kwInput.fill(w);
+      await kwInput.press("Enter");
+    }
+  };
+
+  test("counter chip shows 0 / 5 · max when no plan selected", async ({ page }) => {
+    const form = page.locator("#report-form");
+    const chip = form.getByText(/0 \/ 5/);
+    await expect(chip).toBeVisible();
+    await expect(chip).toContainText("· max");
+  });
+
+  test("selecting Snapshot updates counter to 0 / 1 with no max indicator", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+    const chip = form.getByText(/0 \/ 1/);
+    await expect(chip).toBeVisible();
+    await expect(chip).not.toContainText("· max");
+  });
+
+  test("counter increments when a keyword is added", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await addKeywords(page, ["plumber"]);
+    await expect(form.getByText(/1 \/ 5/)).toBeVisible();
+  });
+
+  test("Snapshot at cap (1) hides input and shows upgrade prompt to Insight", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+    await addKeywords(page, ["plumber"]);
+
+    const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
+    await expect(kwInput).toBeHidden();
+    await expect(form.getByText("Snapshot plan limit reached.")).toBeVisible();
+    await expect(
+      form.getByRole("button", { name: /Upgrade to Insight/ })
+    ).toBeVisible();
+  });
+
+  test("Deep Dive at cap (5) shows limit reached without upgrade button", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: /Deep Dive/ }).click();
+    await addKeywords(page, ["a", "b", "c", "d", "e"]);
+
+    await expect(form.getByText("Deep Dive plan limit reached.")).toBeVisible();
+    await expect(form.getByText("Need more?")).toBeHidden();
+    await expect(
+      form.getByRole("button", { name: /Upgrade to/ })
+    ).toHaveCount(0);
+  });
+
+  test("clicking Upgrade to Insight selects Insight and reopens the input", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+    await addKeywords(page, ["plumber"]);
+
+    await form.getByRole("button", { name: /Upgrade to Insight/ }).click();
+
+    const insightBtn = form.getByRole("button", { name: /Insight/ });
+    await expect(insightBtn).toHaveAttribute("aria-pressed", "true");
+
+    const kwInput = page.getByPlaceholder("e.g. plumber in Manchester");
+    await expect(kwInput).toBeVisible();
+    await expect(form.getByText(/1 \/ 2/)).toBeVisible();
+  });
+
+  test("tags persist when downgrading to a smaller plan", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await addKeywords(page, ["aa", "bb", "cc"]);
+
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+
+    await expect(page.getByRole("button", { name: "Remove aa" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Remove bb" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Remove cc" })).toBeVisible();
+  });
+
+  test("downgrading shows warning banner with correct count", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await addKeywords(page, ["aa", "bb", "cc"]);
+
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+
+    await expect(
+      form.getByText(/2 keywords exceed your Snapshot plan/)
+    ).toBeVisible();
+  });
+
+  test("over-limit tags display the Over limit label", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await addKeywords(page, ["aa", "bb"]);
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+
+    await expect(form.getByText("Over limit")).toHaveCount(1);
+  });
+
+  test("submit is blocked with over-limit error when keywords exceed plan", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await addKeywords(page, ["aa", "bb"]);
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+    await form.getByLabel("Email address").fill("a@b.com");
+    await form.getByLabel("Service area or target city").fill("Bristol");
+
+    await form.getByRole("button", { name: "Get My Visibility Report" }).click();
+
+    await expect(
+      form.getByText(/Your Snapshot plan supports 1 keyword set\. Remove 1 to continue\./)
+    ).toBeVisible();
+  });
+
+  test("removing an over-limit tag clears the warning banner", async ({ page }) => {
+    const form = page.locator("#report-form");
+    await addKeywords(page, ["aa", "bb"]);
+    await form.getByRole("button", { name: /Snapshot/ }).click();
+
+    await expect(
+      form.getByText(/1 keyword exceed your Snapshot plan/)
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Remove bb" }).click();
+
+    await expect(
+      form.getByText(/exceed your Snapshot plan/)
+    ).toHaveCount(0);
   });
 });
 
