@@ -12,7 +12,7 @@ const STEPS = [
     number: "02",
     title: "Choose your plan",
     description:
-      "Pick from Starter, Growth, or Pro — pay once, no subscription.",
+      "Pick the report that fits your needs — pay once, no subscription.",
   },
   {
     number: "03",

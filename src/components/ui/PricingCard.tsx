@@ -4,6 +4,7 @@ type PricingCardProps = {
   name: string;
   price: string;
   period: string;
+  subtitle?: string;
   features: readonly string[];
   recommended?: boolean;
   selected: boolean;
@@ -14,6 +15,7 @@ export function PricingCard({
   name,
   price,
   period,
+  subtitle,
   features,
   recommended = false,
   selected,
@@ -33,6 +35,11 @@ export function PricingCard({
           Most Popular
         </div>
         <PricingHeader name={name} price={price} period={period} inverse />
+        {subtitle && (
+          <p className="mb-7 -mt-3 text-[14px] font-normal leading-5 text-canvas/70">
+            {subtitle}
+          </p>
+        )}
         <PricingFeatures features={features} inverse />
         <button
           type="button"
@@ -53,6 +60,11 @@ export function PricingCard({
       }`}
     >
       <PricingHeader name={name} price={price} period={period} />
+      {subtitle && (
+        <p className="mb-7 -mt-3 text-[14px] font-normal leading-5 text-slate">
+          {subtitle}
+        </p>
+      )}
       <PricingFeatures features={features} />
       <button
         type="button"
