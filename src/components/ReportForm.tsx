@@ -5,20 +5,20 @@ import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 
 const PLANS = [
-  { name: "Snapshot", price: "£9" },
-  { name: "Insight", price: "£19" },
-  { name: "Deep Dive", price: "£39" },
+  { name: "Snapshot", price: "£29" },
+  { name: "Insight", price: "£99" },
+  { name: "Deep Dive", price: "£499" },
 ] as const;
 
 const PLAN_LIMITS = {
   Snapshot: 1,
-  Insight: 2,
-  "Deep Dive": 5,
+  Insight: 5,
+  "Deep Dive": 10,
 } as const;
 
 type PlanName = keyof typeof PLAN_LIMITS;
 const PLAN_ORDER: PlanName[] = ["Snapshot", "Insight", "Deep Dive"];
-const MAX_KEYWORDS = 5;
+const MAX_KEYWORDS = 10;
 
 const isPlanName = (p: string | null): p is PlanName =>
   p !== null && p in PLAN_LIMITS;
