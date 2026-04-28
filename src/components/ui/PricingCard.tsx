@@ -91,11 +91,13 @@ function PricingHeader({
 }) {
   return (
     <>
-      <div className="mb-2">
+      <div className={inverse ? "mb-3" : "mb-2"}>
         <span
-          className={`text-[13px] font-bold uppercase tracking-[0.04em] ${
-            inverse ? "text-canvas/50" : "text-slate"
-          }`}
+          className={
+            inverse
+              ? "text-[18px] font-semibold uppercase tracking-[0.08em] text-canvas"
+              : "text-[13px] font-bold uppercase tracking-[0.04em] text-slate"
+          }
         >
           {name}
         </span>
